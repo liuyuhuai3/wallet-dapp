@@ -39,3 +39,5 @@ function ReadContract() {
     </>
   )
 }
+
+export default ReadContract;

@@ -1,10 +1,9 @@
 // wagmi.config.ts
 import { createConfig,http,createStorage } from 'wagmi';
 import { mainnet,sepolia } from 'wagmi/chains';
-import { createClient } from 'viem'
 import { metaMask,injected,walletConnect,safe } from 'wagmi/connectors';
 
-const projectId = 'WALLETCONNECT_PROJECT_ID'
+const projectId = 'e71e64ce8ced874204ca9b702555b146'
 
 export const config=createConfig({
   chains:[mainnet,sepolia],
