@@ -1,9 +1,9 @@
 import { QueryClient,QueryClientProvider } from '@tanstack/react-query'
 import { useAccount, WagmiProvider } from 'wagmi'
 import { config } from './wagmi.config'
-import { Account } from './account'
-import { WalletOptions } from './wallet-option'
-import { SendTransaction } from './send-transaction'
+import { Account } from './components/account'
+import { WalletOptions } from '../wallet-option'
+import { SendTransaction } from './components/send-transaction'
 
 const queryClient = new QueryClient()
 

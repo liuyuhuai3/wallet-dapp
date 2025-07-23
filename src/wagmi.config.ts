@@ -5,8 +5,10 @@ import { metaMask,injected,walletConnect,safe } from 'wagmi/connectors';
 
 const projectId = 'e71e64ce8ced874204ca9b702555b146'
 
+export const chains = [mainnet, sepolia] as const
+
 export const config=createConfig({
-  chains:[mainnet,sepolia],
+  chains,
   connectors:[
     injected(),
     walletConnect({projectId}),
