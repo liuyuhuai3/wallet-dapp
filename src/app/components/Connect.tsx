@@ -1,6 +1,7 @@
 import * as React from 'react'
 import {Connector,useChainId,useConnect} from 'wagmi'
 
+
 export function Connect() {
   const chainId = useChainId();
   const { connectors, connect } = useConnect();

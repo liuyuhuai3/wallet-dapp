@@ -1,14 +1,14 @@
 'use client'
 
 import { WagmiProvider } from 'wagmi'
-import { config } from '../wagmi.config'
-import { WalletOptions } from '../../wallet-option'
-import ReadContract from '../../read-contract'  
+import { config } from '../../wagmi.config'
+import { WalletOptions } from '../../../wallet-option'
+import ReadContract from '../../../read-contract'  
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { RainbowKitProvider } from '@rainbow-me/rainbowkit'
 import '@rainbow-me/rainbowkit/styles.css'
 import { darkTheme } from '@rainbow-me/rainbowkit'
-import {MintNFT} from '../../mint-nft'
+import {MintNFT} from '../../../mint-nft'
 
 export default function Home() {
   return (

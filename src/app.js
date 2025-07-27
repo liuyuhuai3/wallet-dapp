@@ -1,9 +1,9 @@
 import { QueryClient,QueryClientProvider } from '@tanstack/react-query'
 import { useAccount, WagmiProvider } from 'wagmi'
 import { config } from './wagmi.config'
-import { Account } from './components/account'
-import { WalletOptions } from '../wallet-option'
-import { SendTransaction } from './components/send-transaction'
+import { Account } from './app/components/account'
+import { ConnectButton } from '@rainbow-me/rainbowkit'
+import { SendTransaction } from './app/components/send-transaction'
 
 const queryClient = new QueryClient()
 
@@ -17,11 +17,11 @@ function App() {
   // 3. Wrap app with Wagmi and React Query context.
   return (
     <WagmiProvider config={config}>
-      <QueryClientProvider client={queryClient}> 
-        {/* 没有子内容的自闭和标签 */}
-        <SendTransaction/> 
-        <ConnectWallet />
-      </QueryClientProvider> 
+      <RainbowKitProvider chains={chains}>
+        <ConnectButton />
+      </RainbowKitProvider>
     </WagmiProvider>
   )
 }
+
+export default App;
