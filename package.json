@@ -16,7 +16,7 @@
     "next": "15.4.2",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "wagmi": "^2.15.7",
+    "wagmi": "^2.16.0",
     "web3": "^4.16.0"
   },
   "devDependencies": {
