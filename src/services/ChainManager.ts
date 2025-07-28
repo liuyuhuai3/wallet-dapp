@@ -3,9 +3,9 @@ import { ChainConfig } from '../types/chain';
 import { ChainManagerEvents } from '../types/events';
 import { TransactionRequest, TransactionReceipt } from '../types/transaction';
 import { NetworkHealth } from '../types/network';
-import { SUPPORTED_CHAINS, DEFAULT_CHAIN_ID } from '../constants/chains';
+import { SUPPORTED_CHAINS, DEFAULT_CHAIN_ID } from '../content/chain'; // 修复路径
 import { EventManager } from '../utils/EventManager';
-import { ChainValidator } from '../utils/ChainValidator';
+import { ChainValidator } from '../utils/ChainValicator'; // 注意拼写
 import { NetworkClientManager } from './NetworkClientManager';
 
 export class ChainManager {
@@ -203,7 +203,7 @@ export class ChainManager {
         chainId: targetChainId,
         error: error as Error,
         timestamp: Date.now(),
-        errorType: (error instanceof Error && (error as any).name) ? (error as any).name : 'UnknownError'
+        errorType: 'UNKNOWN' as any
       });
       throw error;
     }

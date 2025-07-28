@@ -1,8 +1,97 @@
-// services/NetworkClientManager.ts
-import Web3 from 'web3';
+// services/NetworkClientManager.ts - 完全修复版本
 import { NetworkClient, NetworkHealth } from '../types/network';
 import { ChainConfig } from '../types/chain';
 import { TransactionRequest, TransactionReceipt } from '../types/transaction';
+
+// 标准的 JSON-RPC 请求接口
+interface JsonRpcRequest {
+  jsonrpc: '2.0';
+  method: string;
+  params: any[];
+  id: number;
+}
+
+interface JsonRpcResponse {
+  jsonrpc: '2.0';
+  result?: any;
+  error?: { code: number; message: string; data?: any };
+  id: number;
+}
+
+// 简单的以太坊 RPC 客户端
+class EthereumRpcClient {
+  private requestId = 0;
+
+  constructor(private rpcUrl: string) {}
+
+  async request(method: string, params: any[] = []): Promise<any> {
+    const requestId = ++this.requestId;
+    
+    const requestBody: JsonRpcRequest = {
+      jsonrpc: '2.0',
+      method,
+      params,
+      id: requestId,
+    };
+
+    try {
+      const response = await fetch(this.rpcUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const result: JsonRpcResponse = await response.json();
+
+      if (result.error) {
+        throw new Error(`RPC Error ${result.error.code}: ${result.error.message}`);
+      }
+
+      return result.result;
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new Error(`RPC request failed: ${error.message}`);
+      }
+      throw new Error('Unknown RPC error');
+    }
+  }
+
+  // 以太坊特定方法的封装
+  async getBlockNumber(): Promise<number> {
+    const blockNumberHex = await this.request('eth_blockNumber');
+    return parseInt(blockNumberHex, 16);
+  }
+
+  async getBalance(address: string, block: string = 'latest'): Promise<string> {
+    return await this.request('eth_getBalance', [address, block]);
+  }
+
+  async getGasPrice(): Promise<string> {
+    return await this.request('eth_gasPrice');
+  }
+
+  async estimateGas(transaction: any): Promise<string> {
+    return await this.request('eth_estimateGas', [transaction]);
+  }
+
+  async sendTransaction(transaction: any): Promise<string> {
+    return await this.request('eth_sendTransaction', [transaction]);
+  }
+
+  async getTransactionReceipt(txHash: string): Promise<any> {
+    return await this.request('eth_getTransactionReceipt', [txHash]);
+  }
+
+  async getChainId(): Promise<string> {
+    return await this.request('eth_chainId');
+  }
+}
 
 export class NetworkClientManager {
   private clients: Map<string, NetworkClient> = new Map();
@@ -13,17 +102,20 @@ export class NetworkClientManager {
    * 创建网络客户端
    */
   createClient(chainConfig: ChainConfig): NetworkClient {
-    // 优先使用第一个RPC URL
     const rpcUrl = chainConfig.rpcUrls[0];
-    const provider = new Web3(new Web3.providers.HttpProvider(rpcUrl));
+    const rpcClient = new EthereumRpcClient(rpcUrl);
 
     const client: NetworkClient = {
       chainId: chainConfig.chainId,
       rpcUrl,
-      provider
+      provider: rpcClient, // 这里直接赋值我们的客户端
+      createdAt: Date.now(),
+      lastActiveAt: Date.now()
     };
 
     this.clients.set(chainConfig.chainId, client);
+    console.log(`Created network client for chain ${chainConfig.chainName} (${chainConfig.chainId})`);
+    
     return client;
   }
 
@@ -31,7 +123,11 @@ export class NetworkClientManager {
    * 获取网络客户端
    */
   getClient(chainId: string): NetworkClient | undefined {
-    return this.clients.get(chainId);
+    const client = this.clients.get(chainId);
+    if (client && client.lastActiveAt !== undefined) {
+      client.lastActiveAt = Date.now();
+    }
+    return client;
   }
 
   /**
@@ -40,6 +136,7 @@ export class NetworkClientManager {
   removeClient(chainId: string): void {
     this.clients.delete(chainId);
     this.healthCache.delete(chainId);
+    console.log(`Removed network client for chain ${chainId}`);
   }
 
   /**
@@ -50,32 +147,46 @@ export class NetworkClientManager {
     if (!client) {
       return {
         isHealthy: false,
-        lastChecked: Date.now()
+        lastChecked: Date.now(),
+        error: 'Client not found'
       };
     }
 
     const startTime = Date.now();
     
     try {
-      const blockNumber = await client.provider.eth.getBlockNumber();
+      // 使用类型断言来访问我们的自定义方法
+      const rpcClient = client.provider as EthereumRpcClient;
+      const blockNumber = await rpcClient.getBlockNumber();
+      
       const latency = Date.now() - startTime;
 
       const health: NetworkHealth = {
         isHealthy: true,
         latency,
-        blockNumber: Number(blockNumber),
-        lastChecked: Date.now()
+        blockNumber,
+        lastChecked: Date.now(),
+        failureCount: 0
       };
 
       this.healthCache.set(chainId, health);
+      console.log(`Network health check passed for ${chainId}: ${latency}ms`);
+      
       return health;
     } catch (error) {
+      const previousHealth = this.healthCache.get(chainId);
+      const failureCount = (previousHealth?.failureCount || 0) + 1;
+      
       const health: NetworkHealth = {
         isHealthy: false,
-        lastChecked: Date.now()
+        lastChecked: Date.now(),
+        error: error instanceof Error ? error.message : 'Unknown error',
+        failureCount
       };
 
       this.healthCache.set(chainId, health);
+      console.error(`Network health check failed for ${chainId}:`, error);
+      
       return health;
     }
   }
@@ -102,7 +213,8 @@ export class NetworkClientManager {
     }
 
     try {
-      return await client.provider.eth.getBalance(address);
+      const rpcClient = client.provider as EthereumRpcClient;
+      return await rpcClient.getBalance(address);
     } catch (error) {
       throw new Error(`Failed to get balance: ${error}`);
     }
@@ -118,7 +230,8 @@ export class NetworkClientManager {
     }
 
     try {
-      return await client.provider.eth.getGasPrice();
+      const rpcClient = client.provider as EthereumRpcClient;
+      return await rpcClient.getGasPrice();
     } catch (error) {
       throw new Error(`Failed to get gas price: ${error}`);
     }
@@ -134,7 +247,8 @@ export class NetworkClientManager {
     }
 
     try {
-      return await client.provider.eth.estimateGas(transaction);
+      const rpcClient = client.provider as EthereumRpcClient;
+      return await rpcClient.estimateGas(transaction);
     } catch (error) {
       throw new Error(`Failed to estimate gas: ${error}`);
     }
@@ -150,14 +264,34 @@ export class NetworkClientManager {
     }
 
     try {
-      const receipt = await client.provider.eth.sendTransaction(transaction);
-      return {
-        transactionHash: receipt.transactionHash,
-        blockNumber: Number(receipt.blockNumber),
-        gasUsed: receipt.gasUsed.toString(),
-        status: receipt.status === 1n || receipt.status === true
-      };
+      const rpcClient = client.provider as EthereumRpcClient;
+      const txHash = await rpcClient.sendTransaction(transaction);
+
+      console.log(`Transaction sent: ${txHash}`);
+
+      // 等待交易被打包
+      let receipt = null;
+      let attempts = 0;
+      const maxAttempts = 60; // 最多等待60秒
+
+      while (!receipt && attempts < maxAttempts) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        receipt = await this.getTransactionReceipt(chainId, txHash);
+        attempts++;
+        
+        if (attempts % 10 === 0) {
+          console.log(`Waiting for transaction confirmation... (${attempts}s)`);
+        }
+      }
+
+      if (!receipt) {
+        throw new Error('Transaction timeout: receipt not found after 60 seconds');
+      }
+
+      console.log(`Transaction confirmed: ${txHash}`);
+      return receipt;
     } catch (error) {
+      console.error('Send transaction failed:', error);
       throw new Error(`Failed to send transaction: ${error}`);
     }
   }
@@ -172,18 +306,48 @@ export class NetworkClientManager {
     }
 
     try {
-      const receipt = await client.provider.eth.getTransactionReceipt(txHash);
+      const rpcClient = client.provider as EthereumRpcClient;
+      const receipt = await rpcClient.getTransactionReceipt(txHash);
+
       if (!receipt) return null;
 
       return {
         transactionHash: receipt.transactionHash,
-        blockNumber: Number(receipt.blockNumber),
-        gasUsed: receipt.gasUsed.toString(),
-        status: receipt.status === 1n || receipt.status === true
+        transactionIndex: receipt.transactionIndex,
+        blockHash: receipt.blockHash,
+        blockNumber: parseInt(receipt.blockNumber, 16),
+        from: receipt.from,
+        to: receipt.to,
+        cumulativeGasUsed: receipt.cumulativeGasUsed,
+        gasUsed: receipt.gasUsed,
+        contractAddress: receipt.contractAddress,
+        logs: receipt.logs,
+        logsBloom: receipt.logsBloom,
+        status: receipt.status === '0x1',
+        effectiveGasPrice: receipt.effectiveGasPrice,
+        type: receipt.type
       };
     } catch (error) {
-      throw new Error(`Failed to get transaction receipt: ${error}`);
+      // 如果交易还未被打包，这里会抛出错误，我们返回 null
+      return null;
     }
+  }
+
+  /**
+   * 获取所有客户端的统计信息
+   */
+  getStats(): { [chainId: string]: { healthy: boolean; lastActive: number } } {
+    const stats: { [chainId: string]: { healthy: boolean; lastActive: number } } = {};
+    
+    for (const [chainId, client] of this.clients) {
+      const health = this.getCachedHealth(chainId);
+      stats[chainId] = {
+        healthy: health?.isHealthy ?? false,
+        lastActive: client.lastActiveAt || 0
+      };
+    }
+    
+    return stats;
   }
 
   /**
@@ -197,6 +361,7 @@ export class NetworkClientManager {
    * 清除所有客户端
    */
   clearAll(): void {
+    console.log('Clearing all network clients');
     this.clients.clear();
     this.healthCache.clear();
   }

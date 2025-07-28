@@ -1,6 +1,4 @@
 // src/types/network.ts
-import Web3 from 'web3';
-
 /**
  * 网络客户端接口
  * 封装了与特定区块链网络的连接信息
@@ -12,8 +10,8 @@ export interface NetworkClient {
   /** RPC 端点URL */
   rpcUrl: string;
   
-  /** Web3 提供者实例 */
-  provider: Web3;
+  /** 提供者实例 - 可以是任何实现了以太坊RPC方法的对象 */
+  provider: any;
   
   /** 客户端创建时间戳 */
   createdAt?: number;
