@@ -1,21 +1,22 @@
 'use client'
 
 import { WagmiProvider } from 'wagmi'
-import { config } from '../../wagmi.config'
-import { WalletOptions } from '../../../wallet-option'
-import ReadContract from '../../../read-contract'  
+import { config } from '../wagmi.config'
+import { WalletOptions } from '../../wallet-option'
+import ReadContract from '../../read-contract'  
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { RainbowKitProvider } from '@rainbow-me/rainbowkit'
 import '@rainbow-me/rainbowkit/styles.css'
 import { darkTheme } from '@rainbow-me/rainbowkit'
-import { MintNFT } from '../../../mint-nft'
+import { MintNFT } from '../../mint-nft'
+import { SendTransaction } from './components/send-transaction'
 // 修复导入路径 - 从 app/page 到 components
 import { 
   SimpleChainSelector, 
   HealthMonitorChainSelector, 
   CompactChainSelector,
   type ChainConfig 
-} from '../components/SimpleChainSelector'
+} from './components/SimpleChainSelector'
 
 export default function Home() {
   // 定义链变更处理函数，明确指定参数类型
@@ -141,7 +142,7 @@ export default function Home() {
               </div>
 
               {/* 现有功能卡片 */}
-              <div className="grid md:grid-cols-2 gap-6">
+              <div className="grid md:grid-cols-3 gap-6">
                 {/* 合约读取 */}
                 <div className="bg-white rounded-xl shadow-md p-6">
                   <h2 className="text-xl font-semibold mb-4 text-gray-800">
@@ -156,6 +157,17 @@ export default function Home() {
                     🎨 NFT铸造
                   </h2>
                   <MintNFT />
+                </div>
+
+                {/* 发送交易 */}
+                <div className="bg-white rounded-xl shadow-md p-6">
+                  <h2 className="text-xl font-semibold mb-4 text-gray-800">
+                    💸 发送交易
+                  </h2>
+                  <p className="text-sm text-gray-600 mb-4">
+                    在Sepolia测试网上发送ETH交易（免费测试）
+                  </p>
+                  <SendTransaction />
                 </div>
               </div>
 
@@ -176,11 +188,20 @@ export default function Home() {
                 <div>
                   <h3 className="font-medium text-gray-700 mb-2">支持的网络</h3>
                   <ul className="text-sm text-gray-600 space-y-1">
+                    <li>• <strong>Sepolia Testnet (推荐测试)</strong> - 免费测试网</li>
                     <li>• Ethereum Mainnet (ETH)</li>
                     <li>• Polygon Mainnet (MATIC)</li>
                     <li>• BNB Smart Chain (BNB)</li>
                     <li>• Arbitrum One (ETH)</li>
                     <li>• Optimism (ETH)</li>
+                  </ul>
+                  
+                  <h3 className="font-medium text-gray-700 mb-2 mt-4">测试步骤</h3>
+                  <ul className="text-sm text-gray-600 space-y-1">
+                    <li>1. 连接MetaMask钱包</li>
+                    <li>2. 切换到Sepolia测试网</li>
+                    <li>3. 获取测试ETH (sepoliafaucet.com)</li>
+                    <li>4. 使用发送交易功能测试</li>
                   </ul>
                 </div>
               </div>

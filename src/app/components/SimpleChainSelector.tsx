@@ -2,6 +2,14 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import './ChainSelector.css';
+import { 
+  ETHEREUM_MAINNET, 
+  POLYGON_MAINNET, 
+  BSC_MAINNET, 
+  ARBITRUM_ONE, 
+  OPTIMISM_MAINNET,
+  SEPOLIA_TESTNET
+} from '../../content/chain';
 
 // 定义链配置类型
 interface ChainConfig {
@@ -12,40 +20,37 @@ interface ChainConfig {
     symbol: string;
     decimals: number;
   };
-  iconUrl: string;
+  iconUrl?: string;
+  rpcUrls?: string[];
+  blockExplorerUrls?: string[];
+  iconUrls?: string[];
 }
 
-// 模拟的链配置数据
-const MOCK_CHAINS: ChainConfig[] = [
+// 使用实际的链配置数据并添加Sepolia
+const AVAILABLE_CHAINS: ChainConfig[] = [
   {
-    chainId: '0x1',
-    chainName: 'Ethereum Mainnet',
-    nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
-    iconUrl: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/info/logo.png'
+    ...ETHEREUM_MAINNET,
+    iconUrl: ETHEREUM_MAINNET.iconUrls?.[0]
   },
   {
-    chainId: '0x89',
-    chainName: 'Polygon Mainnet',
-    nativeCurrency: { name: 'MATIC', symbol: 'MATIC', decimals: 18 },
-    iconUrl: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/polygon/info/logo.png'
+    ...POLYGON_MAINNET,
+    iconUrl: POLYGON_MAINNET.iconUrls?.[0]
   },
   {
-    chainId: '0x38',
-    chainName: 'BNB Smart Chain',
-    nativeCurrency: { name: 'BNB', symbol: 'BNB', decimals: 18 },
-    iconUrl: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/smartchain/info/logo.png'
+    ...BSC_MAINNET,
+    iconUrl: BSC_MAINNET.iconUrls?.[0]
   },
   {
-    chainId: '0xa4b1',
-    chainName: 'Arbitrum One',
-    nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
-    iconUrl: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/arbitrum/info/logo.png'
+    ...ARBITRUM_ONE,
+    iconUrl: ARBITRUM_ONE.iconUrls?.[0]
   },
   {
-    chainId: '0xa',
-    chainName: 'Optimism',
-    nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
-    iconUrl: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/optimism/info/logo.png'
+    ...OPTIMISM_MAINNET,
+    iconUrl: OPTIMISM_MAINNET.iconUrls?.[0]
+  },
+  {
+    ...SEPOLIA_TESTNET,
+    iconUrl: SEPOLIA_TESTNET.iconUrls?.[0]
   }
 ];
 
@@ -62,12 +67,12 @@ export const SimpleChainSelector: React.FC<SimpleChainSelectorProps> = ({
   disabled = false,
   className = ''
 }) => {
-  const [currentChainId, setCurrentChainId] = useState('0x1');
+  const [currentChainId, setCurrentChainId] = useState('0xaa36a7'); // 默认选择Sepolia测试网
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const currentChain = MOCK_CHAINS.find(chain => chain.chainId === currentChainId);
+  const currentChain = AVAILABLE_CHAINS.find(chain => chain.chainId === currentChainId);
 
   // 点击外部关闭下拉菜单
   useEffect(() => {
@@ -86,7 +91,7 @@ export const SimpleChainSelector: React.FC<SimpleChainSelectorProps> = ({
     setCurrentChainId(chainId);
     setIsOpen(false);
     
-    const selectedChain = MOCK_CHAINS.find(chain => chain.chainId === chainId);
+    const selectedChain = AVAILABLE_CHAINS.find(chain => chain.chainId === chainId);
     if (selectedChain && onChainChanged) {
       onChainChanged(selectedChain);
     }
@@ -169,7 +174,7 @@ export const SimpleChainSelector: React.FC<SimpleChainSelectorProps> = ({
             </div>
           )}
 
-          {MOCK_CHAINS.map((chain) => (
+          {AVAILABLE_CHAINS.map((chain) => (
             <button
               key={chain.chainId}
               className={`chain-option ${

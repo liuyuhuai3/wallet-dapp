@@ -84,12 +84,30 @@ export const OPTIMISM_MAINNET: ChainConfig = {
   iconUrls: ['https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/optimism/info/logo.png']
 };
 
+export const SEPOLIA_TESTNET: ChainConfig = {
+  chainId: '0xaa36a7',
+  chainName: 'Sepolia Testnet',
+  nativeCurrency: {
+    name: 'Sepolia Ether',
+    symbol: 'ETH',
+    decimals: 18,
+  },
+  rpcUrls: [
+    'https://sepolia.infura.io/v3/YOUR_INFURA_KEY',
+    'https://rpc.ankr.com/eth_sepolia',
+    'https://sepolia.public.blastapi.io'
+  ],
+  blockExplorerUrls: ['https://sepolia.etherscan.io'],
+  iconUrls: ['https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/info/logo.png']
+};
+
 export const SUPPORTED_CHAINS: Record<string, ChainConfig> = {
   [ETHEREUM_MAINNET.chainId]: ETHEREUM_MAINNET,
   [POLYGON_MAINNET.chainId]: POLYGON_MAINNET,
   [BSC_MAINNET.chainId]: BSC_MAINNET,
   [ARBITRUM_ONE.chainId]: ARBITRUM_ONE,
   [OPTIMISM_MAINNET.chainId]: OPTIMISM_MAINNET,
+  [SEPOLIA_TESTNET.chainId]: SEPOLIA_TESTNET,
 };
 
 export const DEFAULT_CHAIN_ID = ETHEREUM_MAINNET.chainId;
